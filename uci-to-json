@@ -1,3 +1,5 @@
+#!/usr/bin/awk -f 
+
 function strip_quotes(var){
 	gsub(/^[\"']/, "", var); 
 	gsub(/[\"']$/, "", var); 
@@ -11,9 +13,15 @@ BEGIN {
 }
 
 $1 != "" {
-	printf("%s\"%s\": {\n\t\t", CLOSE_TAG, strip_quotes($1)); 
+	TAG_TYPE=strip_quotes($1);
+	TAG_NAME=TAG_TYPE COUNT[TAG_TYPE]; COUNT[TAG_TYPE]++;
+	i = 2; 
+	if($2 != "option" && $2 != "list") {
+		TAG_NAME = TAG_NAME=strip_quotes($2); i = 3; 
+	}
+	printf("%s\"%s\": {\n\t\t", CLOSE_TAG, TAG_NAME);   
 	CLOSE_TAG=""
-	for(i = 2; i < NF; i++){
+	for(; i < NF; i++){
 		TAG=$i
 		switch($i){
 			case "option": {
@@ -29,7 +37,7 @@ $1 != "" {
 					printf("%s\"%s\": [\"%s\"", CLOSE_TAG, 
 						strip_quotes($(i+1)), 
 						strip_quotes($(i+2))); 
-					CLOSE_TAG = "]\n\t\t"
+					CLOSE_TAG = "],\n\t\t"
 				} else {
 					printf(",\"%s\"", strip_quotes($(i+2))); 
 				}
