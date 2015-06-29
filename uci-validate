@@ -1,0 +1,51 @@
+function strip_quotes(var){
+	gsub(/^[\"']/, "", var); 
+	gsub(/[\"']$/, "", var); 
+	return var; 
+}
+
+function push(arr, elem){
+	arr[0]++; 
+	arr[length(arr)+1] = elem; 
+}
+
+BEGIN {
+	RS="config"
+	AST[0][0][0] = 0; 
+}
+
+$1 != "" {
+	CONFIG = strip_quotes($1); 
+	for(i = 2; i < NF; i++){
+		switch($i){
+			case "option": {
+				print "option " $(i+1)
+				AST[CONFIG][strip_quotes($(i+1))][0] = strip_quotes($(i+2)); 
+				i+=2; 
+				break; 
+			}
+			case "list": {
+				print "list " $(i+1)
+				AST[CONFIG][strip_quotes($(i+1))][length(AST[CONFIG][strip_quotes($(i+1))])+1] = strip_quotes($(i+2)); 
+				i+=2; 
+				break; 
+			}
+		}
+	}
+}
+
+END {
+	for(config in AST){
+		for(opt in AST[config]){
+			if(length(AST[config][opt]) == 1)
+				printf("%s: %s\n", opt, AST[config][opt][0]);
+			else {
+				printf("%s: [ ", opt); 
+				for(item in AST[config][opt]){
+					printf("%s ", AST[config][opt][item]);
+				}
+				printf("]\n"); 
+			}
+		}
+	}
+}

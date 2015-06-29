@@ -1,0 +1,57 @@
+function strip_quotes(var){
+	gsub(/^[\"']/, "", var); 
+	gsub(/[\"']$/, "", var); 
+	return var; 
+}
+
+BEGIN {
+	RS="config"
+	# opening json tag
+	printf("{\n\t"); 
+}
+
+$1 != "" {
+	printf("%s\"%s\": {\n\t\t", CLOSE_TAG, strip_quotes($1)); 
+	CLOSE_TAG=""
+	for(i = 2; i < NF; i++){
+		TAG=$i
+		switch($i){
+			case "option": {
+				printf("%s\"%s\": \"%s\"", CLOSE_TAG, 
+					strip_quotes($(i+1)), 
+					strip_quotes($(i+2))); 
+				CLOSE_TAG=",\n\t\t"; 
+				i+=2; 
+				break; 
+			}
+			case "list": {
+				if(PREV_TAG != "list"){
+					printf("%s\"%s\": [\"%s\"", CLOSE_TAG, 
+						strip_quotes($(i+1)), 
+						strip_quotes($(i+2))); 
+					CLOSE_TAG = "]\n\t\t"
+				} else {
+					printf(",\"%s\"", strip_quotes($(i+2))); 
+				}
+				i+=2; 
+				break; 
+			}
+		}
+		PREV_TAG=TAG; 
+	}
+	switch(PREV_TAG){
+		case "list": 
+			printf("]\n"); 
+			break; 
+		case "option": 
+			printf("\n"); 
+			break; 
+	}
+	#printf("%s", CLOSE_TAG); 
+	CLOSE_TAG=",\n\t"; 
+	printf("\t}"); 
+}
+
+END {
+	printf("\n}\n"); 
+}
