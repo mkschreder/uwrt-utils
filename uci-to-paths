@@ -1,0 +1,34 @@
+#!/usr/bin/awk -f 
+
+function strip_quotes(var){
+	gsub(/^[\"']/, "", var); 
+	gsub(/[\"']$/, "", var); 
+	return var; 
+}
+
+function push(arr, elem){
+	arr[0]++; 
+	arr[length(arr)+1] = elem; 
+}
+
+BEGIN {
+	#FS=/[\t[:space:]]/
+}
+
+$1 ~ /config/ {
+	CONFIG_TYPE=strip_quotes($2)
+	if($3 != "")
+		CONFIG_NAME=CONFIG_TYPE "[" strip_quotes($3) "]"
+	else 
+		CONFIG_NAME=CONFIG_TYPE "[" (TYPE_COUNT[CONFIG_TYPE]++) "]"; 
+}
+
+$1 ~ /option/ {
+	print CONFIG_NAME "." strip_quotes($2) "=" strip_quotes($3)
+}
+
+$1 ~ /list/ {
+	if(LIST_NAME != strip_quotes($2)) LIST_INDEX = 0; 
+	LIST_NAME = strip_quotes($2)
+	print CONFIG_NAME "." strip_quotes($2) "[" (LIST_INDEX++) "]=" strip_quotes($3)
+}
